@@ -17,7 +17,7 @@ Spotify app/device through the Spotify Web API.
 
 ## Usage
 
-1. Put `aerocreate-spotify-miniplayer-1.0.1.jar` in the client `mods/` folder only.
+1. Put `aerocreate-spotify-miniplayer-1.0.2.jar` in the client `mods/` folder only.
 2. Launch Minecraft.
 3. Press `O`.
 4. Paste the Spotify app Client ID.
@@ -29,8 +29,10 @@ If the browser redirects to `127.0.0.1` but shows "refused to connect", copy the
 URL from the browser address bar, paste it into the `Callback URL or code` field in
 Minecraft, and click `Finish Login`.
 
-The lower-right HUD shows the current Spotify state. The settings screen can play,
-pause, skip, sync, clear login, or start Minecraft - Volume Alpha by C418.
+The bottom-right HUD is a rotating record pinned to the screen edge. It shows the
+current track title, artist, playback state, progress, and Spotify album art when the
+current playback response includes cover art. The settings screen can play, pause, skip,
+sync, clear login, or start Minecraft - Volume Alpha by C418.
 
 ## Files
 
@@ -49,5 +51,5 @@ Do not share the token file. If login behaves strangely, delete
 The jar is produced at:
 
 ```text
-build/libs/aerocreate-spotify-miniplayer-1.0.1.jar
+build/libs/aerocreate-spotify-miniplayer-1.0.2.jar
 ```

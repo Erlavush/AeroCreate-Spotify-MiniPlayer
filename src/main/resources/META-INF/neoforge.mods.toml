@@ -4,7 +4,7 @@ license="Private"
 
 [[mods]]
 modId="aerocreate_spotify"
-version="1.0.1"
+version="1.0.2"
 displayName="AeroCreate Spotify Mini Player"
 displayTest="IGNORE_SERVER_VERSION"
 authors="AeroCreate"

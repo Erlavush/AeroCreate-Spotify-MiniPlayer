@@ -1,6 +1,7 @@
 package dev.aerocreate.spotify;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.Util;
 
@@ -217,7 +218,9 @@ public final class SpotifyController {
         }
 
         if (item.has("album") && item.get("album").isJsonObject()) {
-            playback.albumName = string(item.getAsJsonObject("album"), "name");
+            JsonObject album = item.getAsJsonObject("album");
+            playback.albumName = string(album, "name");
+            playback.albumImageUrl = albumImageUrl(album);
         }
 
         return playback;
@@ -326,6 +329,39 @@ public final class SpotifyController {
 
     private static boolean bool(JsonObject object, String key) {
         return object.has(key) && !object.get(key).isJsonNull() && object.get(key).getAsBoolean();
+    }
+
+    private static String albumImageUrl(JsonObject album) {
+        if (!album.has("images") || !album.get("images").isJsonArray()) {
+            return "";
+        }
+
+        String fallback = "";
+        String best = "";
+        int bestSize = Integer.MAX_VALUE;
+        JsonArray images = album.getAsJsonArray("images");
+        for (JsonElement element : images) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+
+            JsonObject image = element.getAsJsonObject();
+            String url = string(image, "url");
+            if (url.isBlank()) {
+                continue;
+            }
+            if (fallback.isBlank()) {
+                fallback = url;
+            }
+
+            int size = Math.max(integer(image, "width"), integer(image, "height"));
+            if (size >= 128 && size < bestSize) {
+                best = url;
+                bestSize = size;
+            }
+        }
+
+        return best.isBlank() ? fallback : best;
     }
 
     private static String escapeJson(String value) {

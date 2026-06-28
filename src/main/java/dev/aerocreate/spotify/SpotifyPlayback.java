@@ -4,6 +4,7 @@ public final class SpotifyPlayback {
     public String trackName = "";
     public String artistName = "";
     public String albumName = "";
+    public String albumImageUrl = "";
     public boolean playing;
     public int progressMs;
     public int durationMs;
