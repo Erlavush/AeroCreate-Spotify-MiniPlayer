@@ -1,0 +1,17 @@
+.gradle/
+build/
+out/
+run/
+*.log
+
+# Local Minecraft/Spotify state
+aerocreate-spotify/
+spotify_tokens.json
+config.properties
+
+# IDE files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
