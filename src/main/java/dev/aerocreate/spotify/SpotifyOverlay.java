@@ -4,8 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
 public final class SpotifyOverlay {
-    private static final int WIDTH = 190;
-    private static final int HEIGHT = 56;
+    private static final int WIDTH = 152;
+    private static final int HEIGHT = 42;
 
     private SpotifyOverlay() {
     }
@@ -29,32 +29,29 @@ public final class SpotifyOverlay {
         boolean playing = false;
 
         if (playback != null && playback.hasTrack()) {
-            title = trim(minecraft, playback.trackName, 118);
-            subtitle = trim(minecraft, playback.artistName, 118);
+            title = trim(minecraft, playback.trackName, 104);
+            subtitle = trim(minecraft, playback.artistName, 112);
             progress = playback.currentProgressMs();
             duration = playback.durationMs;
             playing = playback.playing;
         } else {
             title = "AeroCreate Spotify";
-            subtitle = trim(minecraft, SpotifyController.STATE.getMessage(), 150);
+            subtitle = trim(minecraft, SpotifyController.STATE.getMessage(), 118);
         }
 
         graphics.fill(x, y, x + WIDTH, y + HEIGHT, 0xCC101510);
-        graphics.fill(x, y, x + 3, y + HEIGHT, 0xFF54D36A);
-        graphics.fill(x + 10, y + 10, x + 42, y + 42, 0xFF243224);
-        graphics.drawString(minecraft.font, "SP", x + 19, y + 22, 0xFF54D36A, false);
-
-        graphics.drawString(minecraft.font, playing ? ">" : "||", x + 49, y + 8, 0xFF54D36A, false);
-        graphics.drawString(minecraft.font, title, x + 66, y + 8, 0xFFFFFFFF, false);
-        graphics.drawString(minecraft.font, subtitle, x + 66, y + 21, 0xFFB8C4B8, false);
+        graphics.fill(x, y, x + WIDTH, y + 2, 0xFF54D36A);
 
         String hint = SpotifyController.STATE.isBusy() ? "working..." : "O settings";
-        graphics.drawString(minecraft.font, hint, x + 66, y + 35, 0xFF7FA88A, false);
+        graphics.drawString(minecraft.font, playing ? ">" : "II", x + 8, y + 7, 0xFF54D36A, true);
+        graphics.drawString(minecraft.font, title, x + 25, y + 6, 0xFFFFFFFF, true);
+        graphics.drawString(minecraft.font, subtitle, x + 25, y + 17, 0xFFB8C4B8, true);
+        graphics.drawString(minecraft.font, hint, x + 8, y + 29, 0xFF7FA88A, true);
 
         if (duration > 0) {
-            int barX = x + 10;
-            int barY = y + HEIGHT - 6;
-            int barWidth = WIDTH - 20;
+            int barX = x + 70;
+            int barY = y + HEIGHT - 8;
+            int barWidth = WIDTH - 78;
             graphics.fill(barX, barY, barX + barWidth, barY + 2, 0xFF384438);
             int filled = Math.max(0, Math.min(barWidth, (int) (barWidth * (progress / (float) duration))));
             graphics.fill(barX, barY, barX + filled, barY + 2, 0xFF54D36A);

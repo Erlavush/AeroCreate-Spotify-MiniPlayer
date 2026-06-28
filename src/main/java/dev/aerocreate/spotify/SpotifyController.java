@@ -6,9 +6,12 @@ import net.minecraft.Util;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,21 +65,46 @@ public final class SpotifyController {
                 + "&state=" + SpotifyHttp.urlEncode(pendingState);
 
             Util.getPlatform().openUri(URI.create(authUrl));
-            STATE.setMessage("Authorize Spotify in your browser");
+            STATE.setMessage("Authorize Spotify in browser");
         });
     }
 
     public static void handleCallback(String code, String state, String error) {
+        finishLogin(code, state, error, true);
+    }
+
+    public static void finishLoginFromText(String input) {
+        Map<String, String> query = parseCallbackInput(input);
+        finishLogin(query.get("code"), query.get("state"), query.get("error"), false);
+    }
+
+    public static void handleCallbackTimeout() {
+        if (pendingCodeVerifier != null) {
+            STATE.setMessage("Spotify login timed out. Try Login again.");
+            pendingCodeVerifier = null;
+            pendingState = null;
+        }
+    }
+
+    private static void finishLogin(String code, String state, String error, boolean requireState) {
         run("Finishing Spotify login", () -> {
             if (error != null && !error.isBlank()) {
                 STATE.setMessage("Spotify login denied: " + error);
                 return;
             }
             if (code == null || code.isBlank()) {
-                STATE.setMessage("Spotify login failed: no code");
+                STATE.setMessage("Paste the callback URL or code first");
                 return;
             }
-            if (pendingState == null || !pendingState.equals(state)) {
+            if (pendingCodeVerifier == null) {
+                STATE.setMessage("Click Login before finishing auth");
+                return;
+            }
+            if (pendingState == null || (requireState && (state == null || state.isBlank()))) {
+                STATE.setMessage("Spotify login failed: state mismatch");
+                return;
+            }
+            if (state != null && !state.isBlank() && !pendingState.equals(state)) {
                 STATE.setMessage("Spotify login failed: state mismatch");
                 return;
             }
@@ -84,6 +112,9 @@ public final class SpotifyController {
             SpotifyConfig config = SpotifyConfig.load();
             SpotifyTokenStore.Token token = SpotifyHttp.exchangeCode(config.getClientId(), code, pendingCodeVerifier);
             SpotifyTokenStore.save(token);
+            pendingCodeVerifier = null;
+            pendingState = null;
+            stopCallbackServer();
             STATE.setMessage("Spotify linked. Open Spotify on a device.");
             syncBlocking();
         });
@@ -137,6 +168,9 @@ public final class SpotifyController {
 
     public static void clearLogin() {
         SpotifyTokenStore.clear();
+        stopCallbackServer();
+        pendingCodeVerifier = null;
+        pendingState = null;
         STATE.setPlayback(null);
         STATE.setMessage("Spotify login cleared");
     }
@@ -195,6 +229,45 @@ public final class SpotifyController {
         }
         callbackServer = new LocalCallbackServer(SpotifyConfig.CALLBACK_PORT);
         callbackServer.start();
+    }
+
+    private static void stopCallbackServer() {
+        if (callbackServer != null) {
+            callbackServer.stop();
+            callbackServer = null;
+        }
+    }
+
+    private static Map<String, String> parseCallbackInput(String input) {
+        Map<String, String> result = new HashMap<>();
+        if (input == null || input.isBlank()) {
+            return result;
+        }
+
+        String text = input.trim();
+        int question = text.indexOf('?');
+        if (question >= 0 && question + 1 < text.length()) {
+            text = text.substring(question + 1);
+        }
+        int fragment = text.indexOf('#');
+        if (fragment >= 0) {
+            text = text.substring(0, fragment);
+        }
+
+        if (!text.contains("=")) {
+            result.put("code", text);
+            return result;
+        }
+
+        for (String pair : text.split("&")) {
+            int equals = pair.indexOf('=');
+            if (equals > 0) {
+                String key = URLDecoder.decode(pair.substring(0, equals), java.nio.charset.StandardCharsets.UTF_8);
+                String value = URLDecoder.decode(pair.substring(equals + 1), java.nio.charset.StandardCharsets.UTF_8);
+                result.put(key, value);
+            }
+        }
+        return result;
     }
 
     private static void run(String busyMessage, SpotifyTask task) {

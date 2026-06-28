@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 public final class SpotifySettingsScreen extends Screen {
     private EditBox clientIdBox;
     private EditBox contextUriBox;
+    private EditBox callbackBox;
 
     public SpotifySettingsScreen() {
         super(Component.literal("AeroCreate Spotify"));
@@ -19,54 +20,65 @@ public final class SpotifySettingsScreen extends Screen {
     protected void init() {
         SpotifyConfig config = SpotifyConfig.load();
         int center = this.width / 2;
-        int y = this.height / 2 - 78;
+        int panelWidth = Math.min(300, this.width - 24);
+        int left = center - panelWidth / 2;
+        int fieldWidth = panelWidth - 24;
+        int y = Math.max(4, this.height / 2 - 116);
 
-        clientIdBox = new EditBox(this.font, center - 120, y + 18, 240, 20, Component.literal("Spotify Client ID"));
+        clientIdBox = new EditBox(this.font, left + 12, y + 29, fieldWidth, 20, Component.literal("Spotify Client ID"));
         clientIdBox.setMaxLength(128);
         clientIdBox.setValue(config.getClientId());
         addRenderableWidget(clientIdBox);
 
-        contextUriBox = new EditBox(this.font, center - 120, y + 58, 240, 20, Component.literal("Minecraft album URI"));
+        contextUriBox = new EditBox(this.font, left + 12, y + 63, fieldWidth, 20, Component.literal("Minecraft album URI"));
         contextUriBox.setMaxLength(180);
         contextUriBox.setValue(config.getMinecraftContextUri());
         addRenderableWidget(contextUriBox);
 
+        callbackBox = new EditBox(this.font, left + 12, y + 97, fieldWidth, 20, Component.literal("Callback URL or code"));
+        callbackBox.setMaxLength(4096);
+        addRenderableWidget(callbackBox);
+
         addRenderableWidget(Button.builder(Component.literal("Save"), button -> saveConfig())
-            .bounds(center - 120, y + 88, 76, 20)
+            .bounds(left + 12, y + 124, 70, 20)
             .build());
 
         addRenderableWidget(Button.builder(Component.literal("Login"), button -> {
             saveConfig();
             SpotifyController.startLogin();
-        }).bounds(center - 38, y + 88, 76, 20).build());
+        }).bounds(left + 88, y + 124, 70, 20).build());
 
-        addRenderableWidget(Button.builder(Component.literal("Clear Login"), button -> SpotifyController.clearLogin())
-            .bounds(center + 44, y + 88, 76, 20)
+        addRenderableWidget(Button.builder(Component.literal("Finish Login"), button -> SpotifyController.finishLoginFromText(callbackBox.getValue()))
+            .bounds(left + 164, y + 124, 112, 20)
             .build());
 
         addRenderableWidget(Button.builder(Component.literal("Previous"), button -> SpotifyController.previousTrack())
-            .bounds(center - 120, y + 116, 76, 20)
+            .bounds(left + 12, y + 148, 82, 20)
             .build());
 
         addRenderableWidget(Button.builder(Component.literal("Play/Pause"), button -> SpotifyController.togglePlayback())
-            .bounds(center - 38, y + 116, 76, 20)
+            .bounds(left + 100, y + 148, 82, 20)
             .build());
 
         addRenderableWidget(Button.builder(Component.literal("Next"), button -> SpotifyController.nextTrack())
-            .bounds(center + 44, y + 116, 76, 20)
+            .bounds(left + 188, y + 148, 88, 20)
             .build());
 
         addRenderableWidget(Button.builder(Component.literal("Play Minecraft"), button -> {
             saveConfig();
             SpotifyController.playMinecraftAlbum();
-        }).bounds(center - 120, y + 144, 117, 20).build());
+        }).bounds(left + 12, y + 172, 112, 20).build());
 
         addRenderableWidget(Button.builder(Component.literal("Sync"), button -> SpotifyController.sync())
-            .bounds(center + 3, y + 144, 56, 20)
+            .bounds(left + 130, y + 172, 70, 20)
             .build());
 
         addRenderableWidget(Button.builder(Component.literal("Done"), button -> Minecraft.getInstance().setScreen(null))
-            .bounds(center + 64, y + 144, 56, 20)
+            .bounds(left + 206, y + 172, 70, 20)
+            .build());
+
+        addRenderableWidget(Button.builder(Component.literal("Clear Login"), button -> SpotifyController.clearLogin())
+            .bounds(left + 12, y + 196, fieldWidth, 20)
             .build());
     }
 
@@ -74,15 +86,20 @@ public final class SpotifySettingsScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics, mouseX, mouseY, partialTick);
         int center = this.width / 2;
-        int y = this.height / 2 - 78;
+        int panelWidth = Math.min(300, this.width - 24);
+        int left = center - panelWidth / 2;
+        int y = Math.max(4, this.height / 2 - 116);
 
-        graphics.drawCenteredString(this.font, this.title, center, y - 8, 0xFFFFFF);
-        graphics.drawString(this.font, "Spotify Client ID", center - 120, y + 6, 0xA8D8A8, false);
-        graphics.drawString(this.font, "Minecraft context URI", center - 120, y + 46, 0xA8D8A8, false);
-        graphics.drawCenteredString(this.font, SpotifyController.STATE.getMessage(), center, y + 174, 0xB8C4B8);
-        graphics.drawCenteredString(this.font, "Premium + active Spotify device required", center, y + 188, 0x7FA88A);
+        graphics.fill(left - 8, y - 4, left + panelWidth + 8, y + 236, 0xD00A0F0B);
+        graphics.fill(left - 8, y - 6, left + panelWidth + 8, y - 4, 0xFF54D36A);
 
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        graphics.drawCenteredString(this.font, this.title, center, y + 6, 0xFFFFFFFF);
+        graphics.drawString(this.font, "Spotify Client ID", left + 12, y + 18, 0xFFE8F2E8, true);
+        graphics.drawString(this.font, "Minecraft context URI", left + 12, y + 52, 0xFFE8F2E8, true);
+        graphics.drawString(this.font, "Callback URL or code", left + 12, y + 86, 0xFFE8F2E8, true);
+        graphics.drawCenteredString(this.font, SpotifyController.STATE.getMessage(), center, y + 222, 0xFFB8C4B8);
     }
 
     private void saveConfig() {
